@@ -1,5 +1,11 @@
 # Job Offer Notify Emails
 This is a Python app that sends job offer notification emails to users. The email content is generated using Jinja2 templates.
+Service agregates offers published within 24h from the moment of sending the email. The email is sent every 24h at 2:00 PM. 
+
+Offers providers:
+ - pracuj.pl
+ - bulldogjob.pl
+ - justjoin.it
 
 ## Installation
 Clone the repo:
