@@ -1,0 +1,10 @@
+# fly.toml file generated for mail-job-notify on 2023-04-17T13:13:18+02:00
+
+app = "mail-job-notify"
+primary_region = "waw"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+
+

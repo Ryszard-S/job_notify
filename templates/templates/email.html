@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //PL" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pl">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style type="text/css">
+      body {
+        background-color: #f70404;
+        width: 100%;
+        margin: auto 0;
+        padding: 0;
+        font-family: Lato, sans-serif;
+        font-size: 18px;
+        color: #33475b;
+        word-break: break-word;
+      }
+
+      a {
+        text-decoration: underline;
+        color: inherit;
+        font-weight: bold;
+        color: #206897;
+      }
+      a:visited {
+        color: #18191a;
+      }
+
+      img {
+        object-fit: contain;
+      }
+
+      h1 {
+        font-size: 56px;
+        font-weight: 900;
+        color: #423127;
+      }
+
+      p {
+        font-weight: 100;
+        font-family: "Verdana", sans-serif;
+        word-wrap: break-word;
+      }
+      table {
+        border-collapse: collapse;
+        margin: auto;
+      }
+
+      td {
+        vertical-align: middle;
+        border-bottom: 1px solid #d94c53;
+        padding: 5px;
+      }
+
+      #email {
+        margin: auto;
+        width: 600px;
+        background-color: white;
+      }
+
+      .logo {
+        width: 60px;
+      }
+      .location {
+        width: 100px;
+      }
+      .job_title {
+        width: 260px;
+      }
+      .remote {
+        color: rgb(175, 50, 50);
+        width: max-content;
+      }
+      .date {
+        display: table-cell;
+        font-size: 9px;
+        color: #232324;
+        width: 70px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="email">
+      <h1>Tabela z oferami: PRACUJ</h1>
+      <table>
+        {% for offer in pracuj %}
+        <tr>
+          <td class="logo">
+            <img
+              height="50px"
+              width="50px"
+              src="{{ offer.logo }}"
+              alt="{{ offer.employer }}"
+            />
+          </td>
+          <td class="location">
+            <p>{{ offer.location }}</p>
+          </td>
+
+          <td class="remote">
+            {% if offer.remoteWork %}
+
+            <p style="color: rgb(50, 175, 71)">REMOTE</p>
+            {% else %}
+            <p style="color: rgb(175, 50, 50)">LOCAL</p>
+
+            {% endif %}
+          </td>
+
+          <td class="job_title">
+            <a href="{{ offer.offerUrl }}" target="_blank">
+              <p>{{ offer.jobTitle }}</p></a
+            >
+          </td>
+          <td class="date">
+            <p>{{ offer.lastPublicated|datetime }}</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+      <h1>Tabela z oferami: BULLDOG</h1>
+      <table>
+        {% for offer in bulldog %}
+        <tr>
+          <td class="logo">
+            <img
+              height="50px"
+              width="50px"
+              src="{{ offer.logo }}"
+              alt="{{ offer.employer }}"
+            />
+          </td>
+          <td class="location">
+            <p>{{ offer.location }}</p>
+          </td>
+          <td class="remote">
+            {% if offer.remoteWork %}
+
+            <p style="color: rgb(50, 175, 71)">REMOTE</p>
+            {% else %}
+            <p style="color: rgb(175, 50, 50)">LOCAL</p>
+
+            {% endif %}
+          </td>
+          <td class="job_title">
+            <a href="{{ offer.offerUrl }}" target="_blank">
+              <p>{{ offer.jobTitle }}</p></a
+            >
+          </td>
+          <td class="date">
+            <p class="date">{{ offer.lastPublicated|datetime }}</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+      <h1>Tabela z oferami: JUST JOIN IT</h1>
+      <table>
+        {% for offer in just %}
+        <tr>
+          <td class="logo">
+            <img
+              height="50px"
+              width="50px"
+              src="{{ offer.logo }}"
+              alt="{{ offer.employer }}"
+            />
+          </td>
+          <td class="location">
+            <p>{{ offer.location }}</p>
+          </td>
+          <td class="remote">
+            {% if offer.remoteWork %}
+
+            <p style="color: rgb(50, 175, 71)">REMOTE</p>
+            {% else %}
+            <p style="color: rgb(175, 50, 50)">LOCAL</p>
+
+            {% endif %}
+          </td>
+          <td class="job_title">
+            <a href="{{ offer.offerUrl }}" target="_blank">
+              <p>{{ offer.jobTitle }}</p></a
+            >
+          </td>
+          <td class="date">
+            <p class="date">{{ offer.lastPublicated|datetime }}</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </body>
+</html>
