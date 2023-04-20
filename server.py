@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 
-from getOffers import get_offers_pracuj, get_offers_just, get_offers_bulldog
+from getOffers import get_offers_pracuj, get_offers_just, get_offers_bulldog, get_nofluff
 
 app = Flask(__name__)
 
@@ -14,10 +14,15 @@ def datetimeformat(value, format='%d-%m-%Y %H:%M'):
 def hello_world():
     pracuj = get_offers_pracuj()
     bulldog = get_offers_bulldog()
-   
     just = get_offers_just()
+    nofluff = get_nofluff()
 
-    return render_template('main.html', pracuj=pracuj, bulldog=bulldog, just=just)
+    context = [{"name": "Pracuj", "offers": pracuj},
+               {"name": "Bulldog", "offers": bulldog},
+               {"name": "JustJoinIT", "offers": just},
+               {"name": "NoFluff", "offers": nofluff}, ]
+
+    return render_template('main.html', context=context)
 
 
 if __name__ == "__main__":

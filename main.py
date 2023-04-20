@@ -8,7 +8,7 @@ from email.mime.text import MIMEText
 
 from dotenv import load_dotenv
 
-from getOffers import get_offers_just, get_offers_bulldog, get_offers_pracuj
+from getOffers import get_offers_just, get_offers_bulldog, get_offers_pracuj, get_nofluff
 from templates import env
 
 load_dotenv()
@@ -33,8 +33,14 @@ template = env.get_template("email.html")
 pracuj = get_offers_pracuj()
 bulldog = get_offers_bulldog()
 just = get_offers_just()
+nofluff = get_nofluff()
 
-message_html = template.render(pracuj=pracuj, bulldog=bulldog, just=just)
+context = [{"name": "Pracuj", "offers": pracuj},
+           {"name": "Bulldog", "offers": bulldog},
+           {"name": "JustJoinIT", "offers": just},
+           {"name": "NoFluff", "offers": nofluff}, ]
+
+message_html = template.render(context=context)
 
 part1 = MIMEText(message_text, "plain")
 part2 = MIMEText(message_html, "html")

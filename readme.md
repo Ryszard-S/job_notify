@@ -11,7 +11,7 @@ Offers providers:
 Clone the repo:
 
 ```bash
-git clone https://github.com/your_username/job-offer-notify-emails.git
+git clone https://github.com/Ryszard-S/job_notify.git
 ```
 Build the Docker container:
 

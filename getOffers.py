@@ -1,11 +1,14 @@
 import json as js
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import requests
 
 
 def _get_isoformat(date):
     try:
+        if isinstance(date, int):
+            epoch = date / 1000
+            return datetime.utcfromtimestamp(epoch).replace(tzinfo=timezone.utc)
         _date = datetime.fromisoformat(date)
     except ValueError:
         print('ValueError ISOFORMAT')
@@ -25,7 +28,7 @@ def get_offers_pracuj():
 
     for index, offer in enumerate(offers):
         di = dict()
-        
+
         if offers[index - 1].get('groupId') != offers[index].get('groupId'):
             di.update({"offerUrl": offer.get('offerUrl')})
             di.update({"location": offer.get('location')})
@@ -112,3 +115,34 @@ def get_offers_just():
             list_offers.append(di)
     list_offers = list(reversed(sorted(list_offers, key=lambda x: x['lastPublicated'])))
     return list_offers
+
+
+def get_nofluff():
+    b = {"rawSearch": "remote city=wroclaw seniority=junior "}
+    req = requests.post(
+        url=f"https://nofluffjobs.com/api/search/posting?page=1&salaryCurrency=PLN&salaryPeriod=month&region=pl",
+        json=b)
+
+    body = req.json()
+    _offers = body.get('postings')
+
+    date = datetime.now().timestamp() - 24 * 60 * 60
+
+    offers = list(filter(lambda x: (x.get('renewed') or x['posted']) / 1000 >= date, _offers))
+    list_offers = []
+    for index, offer in enumerate(offers):
+        di = dict()
+
+        if offers[index - 1].get('id') != offers[index].get('id'):
+            di.update({"offerUrl": "https://nofluffjobs.com/pl/job/" + offer.get('url')})
+            di.update({"location": offer.get('location').get('places')[0].get('city')})
+            di.update({"jobTitle": offer.get('title')})
+            di.update({"employer": offer.get('name')})
+            di.update({"logo": "https://static.nofluffjobs.com/" + offer.get('logo').get('jobs_listing')})
+            di.update({"remoteWork": offer.get('location').get('fullyRemote')})
+            di.update({"lastPublicated": _get_isoformat(offer.get('renewed') or offer['posted'])})
+            list_offers.append(di)
+    list_offers = list(reversed(sorted(list_offers, key=lambda x: x['lastPublicated'])))
+    return list_offers
+
+#  https://static.nofluffjobs.com/companies/logos/jobs_listing/hl_tech_20180417_115246_20220811_141432.webp
