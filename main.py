@@ -1,3 +1,4 @@
+import asyncio
 import os
 import random
 import smtplib
@@ -6,12 +7,31 @@ from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import aiohttp
 from dotenv import load_dotenv
 
-from getOffers import get_offers_just, get_offers_bulldog, get_offers_pracuj, get_nofluff
+from getOffers import get_offers_just, get_offers_bulldog, get_offers_pracuj, get_offers_nofluff
 from templates import env
 
 load_dotenv()
+
+
+async def get_all(session):
+    task1 = asyncio.create_task(get_offers_just(session))
+    task2 = asyncio.create_task(get_offers_nofluff(session))
+    task3 = asyncio.create_task(get_offers_bulldog(session))
+    task4 = asyncio.create_task(get_offers_pracuj(session))
+    tasks = [task1, task2, task3, task4]
+    results = await asyncio.gather(*tasks)
+    return results
+
+
+async def zet():
+    async with aiohttp.ClientSession() as session:
+        data = await get_all(session)
+        return data
+
+
 sender_email = os.getenv("EMAIL1")
 receiver_email = os.getenv("EMAIL2")
 password = os.getenv("PASSWORD")
@@ -30,10 +50,12 @@ message_text = "Sth went wrong !"
 
 template = env.get_template("email.html")
 
-pracuj = get_offers_pracuj()
-bulldog = get_offers_bulldog()
-just = get_offers_just()
-nofluff = get_nofluff()
+resp = asyncio.run(zet())
+
+pracuj = resp[3]
+bulldog = resp[2]
+just = resp[0]
+nofluff = resp[1]
 
 context = [{"name": "Pracuj", "offers": pracuj},
            {"name": "Bulldog", "offers": bulldog},

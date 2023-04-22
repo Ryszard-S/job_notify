@@ -1,7 +1,4 @@
-import json as js
 from datetime import datetime, timedelta, timezone
-
-import requests
 
 
 def _get_isoformat(date):
@@ -16,10 +13,13 @@ def _get_isoformat(date):
     return _date
 
 
-def get_offers_pracuj():
-    req1 = requests.get('https://massachusetts.pracuj.pl/api/offers?et=17&rw=true&jobBoardVersion=2&pn=1&rop=40').json()
-    req2 = requests.get(
-        'https://massachusetts.pracuj.pl/api/offers?wp=Wroc%C5%82aw&et=17&et=1&jobBoardVersion=2&rop=20&pn=1').json()
+async def get_offers_pracuj(session):
+    async with session.get(
+            'https://massachusetts.pracuj.pl/api/offers?et=17&rw=true&jobBoardVersion=2&pn=1&rop=40') as resp:
+        req1 = await resp.json()
+    async with session.get(
+            'https://massachusetts.pracuj.pl/api/offers?et=17&rw=true&jobBoardVersion=2&pn=1&rop=40') as resp:
+        req2 = await resp.json()
     offers_list = req1.get('offers') + req2.get('offers')
     date = datetime.today() - timedelta(days=1)
     offers = list(filter(lambda x: _get_isoformat(x['lastPublicated']) >= date, offers_list))
@@ -42,7 +42,7 @@ def get_offers_pracuj():
     return list_offers
 
 
-def get_offers_bulldog():
+async def get_offers_bulldog(session):
     body = {"operationName": "searchJobs",
             "variables": {
                 "page": 1,
@@ -60,32 +60,31 @@ def get_offers_bulldog():
         "Accept": "*/*",
         "Accept-Language": "pl, en - US;q = 0.7, en;q = 0.3",
         "Referer": "https://bulldogjob.pl/companies/jobs/s/city,Remote,Wroc%C5%82aw/experienceLevel,junior"}
-    req = requests.post("https://bulldogjob.pl/graphql", data=js.dumps(body), headers=headers)
-    _offers = req.json().get("data").get("searchJobs").get('nodes')
+    async with session.post("https://bulldogjob.pl/graphql", json=body, headers=headers) as resp:
+        print(resp.status, __name__)
+        r = await resp.json()
+        _offers = r.get("data").get("searchJobs").get('nodes')
 
-    date = datetime.fromisoformat(datetime.now().isoformat() + '+02:00') - timedelta(days=5)
-    offers = list(filter(lambda x: _get_isoformat(x['publishedAt']) >= date, _offers))
+        date = datetime.fromisoformat(datetime.now().isoformat() + '+02:00') - timedelta(days=5)
+        offers = list(filter(lambda x: _get_isoformat(x['publishedAt']) >= date, _offers))
 
-    list_offers = []
+        list_offers = []
 
-    for offer in offers:
-        di = dict()
-        di.update({"offerUrl": "https://bulldogjob.pl/companies/jobs/" + offer.get('id')})
-        di.update({"location": offer.get('city')})
-        di.update({"jobTitle": offer.get('position')})
-        di.update({"employer": offer.get('company').get('name')})
-        di.update({"logo": offer.get('company').get('logo').get('url')})
-        di.update({"remoteWork": offer.get('remote')})
-        di.update({"lastPublicated": _get_isoformat(offer.get('endsAt'))})
-        list_offers.append(di)
+        for offer in offers:
+            di = dict()
+            di.update({"offerUrl": "https://bulldogjob.pl/companies/jobs/" + offer.get('id')})
+            di.update({"location": offer.get('city')})
+            di.update({"jobTitle": offer.get('position')})
+            di.update({"employer": offer.get('company').get('name')})
+            di.update({"logo": offer.get('company').get('logo').get('url')})
+            di.update({"remoteWork": offer.get('remote')})
+            di.update({"lastPublicated": _get_isoformat(offer.get('endsAt'))})
+            list_offers.append(di)
 
-    return list_offers
+        return list_offers
 
 
-def get_offers_just():
-    req = requests.get('https://justjoin.it/api/offers')
-    offers_just = req.json()
-
+async def get_offers_just(session):
     def __filter_just(x):
         d = datetime.fromisoformat(datetime.now().isoformat() + '+02:00') - timedelta(days=1)
         city = x['city'] == 'Wrocław'
@@ -96,53 +95,55 @@ def get_offers_just():
             return True
         return False
 
-    offers = list(filter(__filter_just, offers_just))
-    offers = list(sorted(offers, key=lambda x: x['id']))
+    async with session.get('https://justjoin.it/api/offers') as resp:
+        print(resp.status, __name__)
+        offers_just = await resp.json()
 
-    list_offers = []
+        offers = list(filter(__filter_just, offers_just))
+        offers = list(sorted(offers, key=lambda x: x['id']))
 
-    for index, offer in enumerate(offers):
+        list_offers = []
 
-        di = dict()
-        if offers[index - 1].get('title') != offers[index].get('title'):
-            di.update({"offerUrl": "https://justjoin.it/offers/" + offer.get('id')})
-            di.update({"location": offer.get('city')})
-            di.update({"jobTitle": offer.get('title')})
-            di.update({"employer": offer.get('company_name')})
-            di.update({"logo": offer.get('company_logo_url')})
-            di.update({"remoteWork": offer.get('remote')})
-            di.update({"lastPublicated": _get_isoformat(offer.get('published_at'))})
-            list_offers.append(di)
-    list_offers = list(reversed(sorted(list_offers, key=lambda x: x['lastPublicated'])))
-    return list_offers
+        for index, offer in enumerate(offers):
+
+            di = dict()
+            if offers[index - 1].get('title') != offers[index].get('title'):
+                di.update({"offerUrl": "https://justjoin.it/offers/" + offer.get('id')})
+                di.update({"location": offer.get('city')})
+                di.update({"jobTitle": offer.get('title')})
+                di.update({"employer": offer.get('company_name')})
+                di.update({"logo": offer.get('company_logo_url')})
+                di.update({"remoteWork": offer.get('remote')})
+                di.update({"lastPublicated": _get_isoformat(offer.get('published_at'))})
+                list_offers.append(di)
+        list_offers = list(reversed(sorted(list_offers, key=lambda x: x['lastPublicated'])))
+        return list_offers
 
 
-def get_nofluff():
+async def get_offers_nofluff(session):
     b = {"rawSearch": "remote city=wroclaw seniority=junior "}
-    req = requests.post(
-        url=f"https://nofluffjobs.com/api/search/posting?page=1&salaryCurrency=PLN&salaryPeriod=month&region=pl",
-        json=b)
+    url = f"https://nofluffjobs.com/api/search/posting?page=1&salaryCurrency=PLN&salaryPeriod=month&region=pl"
 
-    body = req.json()
-    _offers = body.get('postings')
+    async with session.post(url, json=b) as resp:
+        print(resp.status, __name__)
+        body = await resp.json()
+        _offers = body.get('postings')
 
-    date = datetime.now().timestamp() - 24 * 60 * 60
+        date = datetime.now().timestamp() - 24 * 60 * 60
 
-    offers = list(filter(lambda x: (x.get('renewed') or x['posted']) / 1000 >= date, _offers))
-    list_offers = []
-    for index, offer in enumerate(offers):
-        di = dict()
+        offers = list(filter(lambda x: (x.get('renewed') or x['posted']) / 1000 >= date, _offers))
+        list_offers = []
+        for index, offer in enumerate(offers):
+            di = dict()
 
-        if offers[index - 1].get('id') != offers[index].get('id'):
-            di.update({"offerUrl": "https://nofluffjobs.com/pl/job/" + offer.get('url')})
-            di.update({"location": offer.get('location').get('places')[0].get('city')})
-            di.update({"jobTitle": offer.get('title')})
-            di.update({"employer": offer.get('name')})
-            di.update({"logo": "https://static.nofluffjobs.com/" + offer.get('logo').get('jobs_listing')})
-            di.update({"remoteWork": offer.get('location').get('fullyRemote')})
-            di.update({"lastPublicated": _get_isoformat(offer.get('renewed') or offer['posted'])})
-            list_offers.append(di)
-    list_offers = list(reversed(sorted(list_offers, key=lambda x: x['lastPublicated'])))
-    return list_offers
-
-#  https://static.nofluffjobs.com/companies/logos/jobs_listing/hl_tech_20180417_115246_20220811_141432.webp
+            if offers[index - 1].get('id') != offers[index].get('id'):
+                di.update({"offerUrl": "https://nofluffjobs.com/pl/job/" + offer.get('url')})
+                di.update({"location": offer.get('location').get('places')[0].get('city')})
+                di.update({"jobTitle": offer.get('title')})
+                di.update({"employer": offer.get('name')})
+                di.update({"logo": "https://static.nofluffjobs.com/" + offer.get('logo').get('jobs_listing')})
+                di.update({"remoteWork": offer.get('location').get('fullyRemote')})
+                di.update({"lastPublicated": _get_isoformat(offer.get('renewed') or offer['posted'])})
+                list_offers.append(di)
+        list_offers = list(reversed(sorted(list_offers, key=lambda x: x['lastPublicated'])))
+        return list_offers
