@@ -1,5 +1,10 @@
 from datetime import datetime, timedelta, timezone
 
+import redis
+
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+days = 31 * 24 * 60 * 60
+
 
 def _get_isoformat(date):
     try:
@@ -28,6 +33,11 @@ async def get_offers_pracuj(session):
 
     for index, offer in enumerate(offers):
         di = dict()
+        offer_id = offer.get('offerId')
+        if r.exists(f'pracuj:{offer_id}'):
+            continue
+        else:
+            r.setex(f'pracuj:{offer_id}', days, 1)
 
         if offers[index - 1].get('groupId') != offers[index].get('groupId'):
             di.update({"offerUrl": offer.get('offerUrl')})
@@ -62,8 +72,8 @@ async def get_offers_bulldog(session):
         "Referer": "https://bulldogjob.pl/companies/jobs/s/city,Remote,Wroc%C5%82aw/experienceLevel,junior"}
     async with session.post("https://bulldogjob.pl/graphql", json=body, headers=headers) as resp:
         print(resp.status, __name__)
-        r = await resp.json()
-        _offers = r.get("data").get("searchJobs").get('nodes')
+        req = await resp.json()
+        _offers = req.get("data").get("searchJobs").get('nodes')
 
         date = datetime.fromisoformat(datetime.now().isoformat() + '+02:00') - timedelta(days=5)
         offers = list(filter(lambda x: _get_isoformat(x['publishedAt']) >= date, _offers))
@@ -72,6 +82,12 @@ async def get_offers_bulldog(session):
 
         for offer in offers:
             di = dict()
+            offer_id = offer.get('id')
+            if r.exists(f'bulldog:{offer_id}'):
+                continue
+            else:
+                r.setex(f'bulldog:{offer_id}', days, 1)
+
             di.update({"offerUrl": "https://bulldogjob.pl/companies/jobs/" + offer.get('id')})
             di.update({"location": offer.get('city')})
             di.update({"jobTitle": offer.get('position')})
@@ -106,6 +122,12 @@ async def get_offers_just(session):
 
         for index, offer in enumerate(offers):
 
+            offer_id = offer.get('id')
+            if r.exists(f'just:{offer_id}'):
+                continue
+            else:
+                r.setex(f'just:{offer_id}', days, 1)
+
             di = dict()
             if offers[index - 1].get('title') != offers[index].get('title'):
                 di.update({"offerUrl": "https://justjoin.it/offers/" + offer.get('id')})
@@ -134,6 +156,13 @@ async def get_offers_nofluff(session):
         offers = list(filter(lambda x: (x.get('renewed') or x['posted']) / 1000 >= date, _offers))
         list_offers = []
         for index, offer in enumerate(offers):
+
+            offer_id = offer.get('id')
+            if r.exists(f'nofluff:{offer_id}'):
+                continue
+            else:
+                r.setex(f'nofluff:{offer_id}', days, 1)
+
             di = dict()
 
             if offers[index - 1].get('id') != offers[index].get('id'):
